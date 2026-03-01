@@ -1,46 +1,84 @@
 package org.drakosha.corpsedragonsurvival;
 
-import de.maxhenkel.corpse.corelib.helpers.Pair;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-@Mod.EventBusSubscriber(modid = CorpseDragonSurvival.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = CorpseDragonSurvival.MODID, bus = EventBusSubscriber.Bus.MOD)
 public class Config {
-    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
+    private static ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
-    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> CORPSE_ANIMATION_MAP = BUILDER
+    private static final ModConfigSpec.ConfigValue<List<? extends List<? extends List<? extends String>>>> CORPSE_ANIMATION_OVERRIDES = BUILDER
             .comment("""
                     Animation IDs to use for corpse poses by body types
                     Animation will be frozen on first frame
-                    Each line must consist of two parts: body type list and animation list
-                    Lists are delimited by semicolon""")
-            .defineList("corpseAnimationMap", List.of(
-                    "center;east;west;south;north:sleeping_on_side_left;sleeping_on_side_right;sleeping_on_back"
-            ), o -> true);
+                    Each line must consist of two arrays: body type list and animation list
+                    Example:
+                    [
+                        [["dragonsurvival:north", "dragonsurvival:east"], ["animation1", "animation2"]],
+                        [["dragonsurvival:bee_queen"], ["animation3"]]
+                    ]""")
+            .defineList("corpseAnimationOverrides",
+                    List.of(),
+                    () -> List.of(List.of(), List.of()),
+                    obj -> true
+            );
 
-    static final ForgeConfigSpec SPEC = BUILDER.build();
+    private static final List<List<List<String>>> corpseAnimationOverridesBase = List.of(
+            List.of(
+                    List.of("dragonsurvival:center",
+                            "dragonsurvival:east",
+                            "dragonsurvival:west",
+                            "dragonsurvival:south",
+                            "dragonsurvival:north"),
+                    List.of("sleeping_on_side_left",
+                            "resting_straight",
+                            "resting_on_back")
+            ),
+            List.of(
+                    List.of("dragonsurvival:aether_body"),
+                    List.of("sleep",
+                            "sleep_left")
+            ),
+            List.of(
+                    List.of("dragonsurvival:bee_queen"),
+                    List.of("sleep",
+                            "resting_straight")
+            ),
+            List.of(
+                    List.of("dragonsurvival:claw_monster"),
+                    List.of("rocking_on_back")
+            ),
+            List.of(
+                    List.of("dragonsurvival:griffin_general"),
+                    List.of("sleep")
+            )
+    );
+
+    static final ModConfigSpec SPEC = BUILDER.build();
 
     public static Map<String, List<String>> corpseEmoteMap;
 
     @SubscribeEvent
-    static void onLoad(final ModConfigEvent event) {
+    static void onLoad(final ModConfigEvent.Loading event) {
         corpseEmoteMap = new HashMap<>();
 
-        var lines = CORPSE_ANIMATION_MAP.get().stream().map(s -> {
-            String[] parts = s.split(":", 2);
-            String[] keys = parts[0].split(";");
-            String[] values = parts[1].split(";");
+        applyCorpseAnimationOverrides(corpseAnimationOverridesBase);
+        applyCorpseAnimationOverrides(CORPSE_ANIMATION_OVERRIDES.get());
+    }
 
-            return new Pair<>(keys, values);
-        }).toList();
-
-        lines.forEach(pair -> Arrays.stream(pair.getKey()).forEach(s -> corpseEmoteMap.put(s, List.of(pair.getValue()))));
+    private static void applyCorpseAnimationOverrides(List<? extends List<? extends List<? extends String>>> overrides)
+    {
+        for (var mapping : overrides) {
+            for (var bodyType : mapping.get(0)) {
+                corpseEmoteMap.put(bodyType, mapping.get(1).stream().collect(Collectors.toUnmodifiableList()));
+            }
+        }
     }
 }

@@ -1,30 +1,22 @@
 package org.drakosha.corpsedragonsurvival.network;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.drakosha.corpsedragonsurvival.CorpseDragonSurvival;
 
+@EventBusSubscriber(modid = CorpseDragonSurvival.MODID, bus = EventBusSubscriber.Bus.GAME)
 public class Network {
-    private static final String PROTOCOL_VERSION = "1";
-    public static final SimpleChannel INSTANCE = NetworkRegistry.ChannelBuilder
-            .named(ResourceLocation.fromNamespaceAndPath(CorpseDragonSurvival.MODID, "dragon_capability"))
-            .serverAcceptedVersions(PROTOCOL_VERSION::equals)
-            .clientAcceptedVersions(PROTOCOL_VERSION::equals)
-            .networkProtocolVersion(() -> PROTOCOL_VERSION)
-            .simpleChannel();
+    @SubscribeEvent
+    public static void registerPayloadHandlers(final RegisterPayloadHandlersEvent event) {
+        final PayloadRegistrar registrar = event.registrar(CorpseDragonSurvival.MODID)
+                .versioned("1.0.0");
 
-    private static int packetId = 0;
-
-    public static void register() {
-        INSTANCE.registerMessage(packetId++,
-                DragonCorpseMessage.class,
-                (msg, buf) -> msg.encode(msg, buf),
-                (buf) -> {
-                    DragonCorpseMessage msg = new DragonCorpseMessage();
-                    return msg.decode(buf);
-                },
-                (msg, ctx) -> msg.handle(msg, ctx)
+        registrar.playToClient(
+                DragonCorpseMessage.TYPE,
+                DragonCorpseMessage.STREAM_CODEC,
+                DragonCorpseMessage::handleClient
         );
     }
 }

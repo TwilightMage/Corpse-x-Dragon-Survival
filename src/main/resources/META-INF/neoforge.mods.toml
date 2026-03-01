@@ -6,35 +6,37 @@ license = "${mod_license}"
 modId = "${mod_id}"
 version = "${mod_version}"
 displayName = "${mod_name}"
-logoFile="corpsedragonsurvival.png"
+logoFile = "corpsedragonsurvival.png"
 authors = "${mod_authors}"
 description = '''${mod_description}'''
-mixinconfig="corpsedragonsurvival.mixins.json"
+
+[[mixins]]
+config = "corpsedragonsurvival.mixins.json"
 
 [[dependencies."${mod_id}"]]
-modId = "forge"
-mandatory = true
-versionRange = "${forge_version_range}"
+modId = "neoforge"
+type = "required"
+versionRange = "${neoforge_version_range}"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies."${mod_id}"]]
 modId = "minecraft"
-mandatory = true
+type = "required"
 versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies."${mod_id}"]]
-modId="dragonsurvival"
-mandatory=true
-versionRange="[1.5.59,)"
-ordering="AFTER"
-side="BOTH"
+modId = "dragonsurvival"
+type = "required"
+versionRange = "[2.0.53,)"
+ordering = "AFTER"
+side = "BOTH"
 
 [[dependencies."${mod_id}"]]
-modId="corpse"
-mandatory=true
-versionRange="[1.20.1-1.0.23,)"
-ordering="AFTER"
-side="BOTH"
+modId = "corpse"
+type = "required"
+versionRange = "[1.21.1-1.1.13,)"
+ordering = "AFTER"
+side = "BOTH"

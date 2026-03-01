@@ -1,31 +1,26 @@
 package org.drakosha.corpsedragonsurvival.capabilities;
 
 import by.dragonsurvivalteam.dragonsurvival.common.capability.DragonStateHandler;
-import de.maxhenkel.corpse.entities.CorpseEntity;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.capabilities.EntityCapability;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.drakosha.corpsedragonsurvival.CorpseDragonSurvival;
 
-@Mod.EventBusSubscriber(modid = CorpseDragonSurvival.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+import java.util.function.Supplier;
+
 public class Capabilities {
-    public static final Capability<DragonCorpseData> DRAGON_CORPSE_CAPABILITY = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
+            DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, CorpseDragonSurvival.MODID);
 
-    public static final Capability<DragonStateHandler> DRAGON_CAPABILITY = by.dragonsurvivalteam.dragonsurvival.common.capability.Capabilities.DRAGON_CAPABILITY;
+    public static final Supplier<AttachmentType<DragonCorpseData>> DRAGON_CORPSE_DATA =
+            ATTACHMENT_TYPES.register("dragon_corpse", () -> AttachmentType.serializable(DragonCorpseData::new)
+                    .build());
 
-    @SubscribeEvent
-    public static void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
-        Entity entity = event.getObject();
-        if (entity instanceof CorpseEntity) {
-            ResourceLocation key = ResourceLocation.fromNamespaceAndPath(CorpseDragonSurvival.MODID, "dragon_corpse");
-            DragonCorpseCapabilityProvider provider = new DragonCorpseCapabilityProvider();
+    public static final EntityCapability<DragonStateHandler, Void> DRAGON_CAPABILITY = by.dragonsurvivalteam.dragonsurvival.common.capability.Capabilities.DRAGON_CAPABILITY;
 
-            event.addCapability(key, provider);
-        }
+    public static void register(IEventBus eventBus) {
+        ATTACHMENT_TYPES.register(eventBus);
     }
 }
